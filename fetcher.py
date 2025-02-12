@@ -1,5 +1,6 @@
 import requests
 from pymongo import MongoClient
+import re
 
 # Conectar a MongoDB
 username = 'pokemon_db'
@@ -8,7 +9,6 @@ password = 'H6fdOF2505Qn3boQ'
 uri = f'mongodb+srv://{username}:{password}@clusterpoke.hexkh.mongodb.net/?retryWrites=true&w=majority&appName=ClusterPoke'
 
 client = MongoClient(uri)
-
 db = client['pokemon_db']
 pokemon_collection = db['pokemon']
 
@@ -63,10 +63,14 @@ def get_pokemon_data(pokemon_id):
         return None
 
 def determine_evolution_stage_and_trigger(evolution_chain, pokemon_name, stage=1, trigger="None"):
-    if 'chain' in evolution_chain:
-        chain = evolution_chain['chain']
-        return find_stage_and_trigger(chain, pokemon_name, stage, trigger)
-    return 1, "None"
+    if not evolution_chain or 'chain' not in evolution_chain:
+        return 1, "None"
+    
+    # Si el nombre tiene un "-", usamos solo la primera parte
+    base_name = re.split(r'-', pokemon_name)[0]
+    
+    chain = evolution_chain['chain']
+    return find_stage_and_trigger(chain, base_name, stage, trigger)
 
 def find_stage_and_trigger(chain, pokemon_name, stage, trigger):
     if chain['species']['name'] == pokemon_name:
