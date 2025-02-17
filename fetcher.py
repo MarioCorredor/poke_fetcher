@@ -1,10 +1,15 @@
 import requests
 from pymongo import MongoClient
 import re
+import os
+from dotenv import load_dotenv
 
-# Conectar a MongoDB
-username = 'pokemon_db'
-password = 'H6fdOF2505Qn3boQ'
+# Cargar variables de entorno desde .env
+load_dotenv()
+
+# Obtener credenciales desde variables de entorno
+username = os.getenv("MONGO_USERNAME")
+password = os.getenv("MONGO_PASSWORD")
 
 uri = f'mongodb+srv://{username}:{password}@clusterpoke.hexkh.mongodb.net/?retryWrites=true&w=majority&appName=ClusterPoke'
 
@@ -23,8 +28,14 @@ def get_pokemon_data(pokemon_id):
         species_url = pokemon_data.get('species', {}).get('url')
         species_data = {}
         evolution_chain = {}
+        species_id = None
         
         if species_url:
+            # Extraer el speciesId de la URL
+            match = re.search(r'/pokemon-species/(\d+)/', species_url)
+            if match:
+                species_id = int(match.group(1))
+            
             species_response = requests.get(species_url)
             if species_response.status_code == 200:
                 species_data = species_response.json()
@@ -39,6 +50,7 @@ def get_pokemon_data(pokemon_id):
         
         pokemon_info = {
             "id": pokemon_data.get('id'),
+            "speciesId": species_id,
             "name": pokemon_data.get('name'),
             "weight": pokemon_data.get('weight'),
             "height": pokemon_data.get('height'),
